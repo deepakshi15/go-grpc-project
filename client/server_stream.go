@@ -4,27 +4,34 @@ import (
 	"context"
 	"io"
 	"log"
-
+	"errors"
+	"time"
 	pb "github.com/akhil/grpc-demo/proto"
 )
 
 func callSayHelloServerStream(client pb.GreetServiceClient, names *pb.NamesList) {
-	log.Printf("Streaming started")
-	stream, err := client.SayHelloServerStreaming(context.Background(), names)
+	log.Println("Server streaming started")
+
+	// Give the whole call a deadline
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stream, err := client.SayHelloServerStreaming(ctx, names)
 	if err != nil {
-		log.Fatalf("Could not send names: %v", err)
+		logRPCError("server streaming", err)
+		return
 	}
 
 	for {
-		message, err := stream.Recv()
-		if err == io.EOF {
+		msg, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error while streaming %v", err)
+			logRPCError("server streaming", err)
+			return
 		}
-		log.Println(message)
+		log.Println(msg.GetMessage())
 	}
-
-	log.Printf("Streaming finished")
+	log.Println("Server streaming finished")
 }

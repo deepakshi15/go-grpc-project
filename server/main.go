@@ -15,7 +15,7 @@ const (
 
 //this is the struct to be created, pb is imported upstairs
 type helloServer struct {
-	pb.GreetServiceServer
+	pb.UnimplementedGreetServiceServer
 }
 
 func main() {

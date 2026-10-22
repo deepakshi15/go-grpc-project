@@ -1,8 +1,12 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"log"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/akhil/grpc-demo/proto"
 )
@@ -10,17 +14,19 @@ import (
 func (s *helloServer) SayHelloBidirectionalStreaming(stream pb.GreetService_SayHelloBidirectionalStreamingServer) error {
 	for {
 		req, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		log.Printf("Got request with name : %v", req.Name)
-		res := &pb.HelloResponse{
-			Message: "Hello " + req.Name,
+
+		if req.GetName() == "" {
+			return status.Error(codes.InvalidArgument, "name must not be empty")
 		}
-		if err := stream.Send(res); err != nil {
+
+		log.Printf("Got request with name: %s", req.GetName())
+		if err := stream.Send(&pb.HelloResponse{Message: "Hello " + req.GetName()}); err != nil {
 			return err
 		}
 	}
