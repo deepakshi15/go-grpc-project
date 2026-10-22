@@ -34,7 +34,7 @@ func (s *helloServer) SayHelloServerStreaming(req *pb.NamesList, stream pb.Greet
 		case <-ctx.Done():
 			log.Printf("Client cancelled the stream: %v", ctx.Err())
 			return status.FromContextError(ctx.Err()).Err()
-		case <-time.After(2 * time.Second):
+		case <-time.After(s.delay):
 		}
 	}
 	return nil
